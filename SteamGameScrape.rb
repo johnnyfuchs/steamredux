@@ -2,7 +2,7 @@ require 'open-uri'
 require 'nokogiri'
 require 'cgi'
 
-class SteamStrape
+class SteamGameStrape
     def initialize
         @page = 1
         @url = "http://store.steampowered.com/search/results"
@@ -70,7 +70,7 @@ end
 #
 # Executing script
 #
-ss = SteamStrape.new
+ss = SteamGameStrape.new
 
 while res = ss.next_page do
     res.each do |row|
