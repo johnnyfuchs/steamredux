@@ -16,26 +16,36 @@ class SteamStrape
         @page = @page.next
         doc_content = open("#{@url}?page=#{@page}", "User-Agent" => @user_agent)
         @doc = Nokogiri::HTML( doc_content )
-        self.parse_page
+        page_results = self.parse_page
+        page_results
     end
 
     def parse_page
-        @doc.css('.search_result_row').each do |ele|
+        rows = @doc.css('.search_result_row')
+        results = []
+        rows.each do |ele|
             @row = @row.next
             @ele = ele
             id = self.game_id
             if id
-                self.format_next_row( id, self.game_price, self.game_name, self.game_type )
+                results << self.format_next_row( id, self.game_price, self.game_name, self.game_type )
             end
         end
+        results
     end
 
     def format_next_row( id, price, name, type)
-        puts "#{@row.to_s.ljust(5)} #{id.ljust(7)} #{type} #{price.ljust(15)} #{name.ljust(5)}"
+        "#{@row.to_s}\t#{id}\t#{type}\t#{price}\t#{name}"
     end
 
     def game_type
-        @ele.css('.search_type img').first.attribute('src').content.scan(/(app|dlc|vid)/).first.first
+        img_ele = @ele.css('.search_type img')
+        if img_ele && img_ele.length && img_ele.first.attribute('src')
+            type = img_ele.first.attribute('src').content.scan(/(app|dlc|vid|mod|guide)/).first.first
+        else
+            type = '???'
+        end
+        type
     end
 
     def game_id
@@ -45,11 +55,9 @@ class SteamStrape
     end
     
     def game_name
-        opts = { :invalid => 'replace',
-                 :undef => 'replace', 
-                 :replace => '' }
         raw_name = @ele.css('.search_name h4').first
-        raw_name ? raw_name.content.gsub(/[\s]+/, " ").encode( Encoding::ISO_8859_1 ).encode( Encoding::UTF_8, :invalid => :replace, :undef => :replace, :replace => "" ) : ''
+        #raw_name ? raw_name.content.gsub(/[\s]+/, " ").encode( Encoding::ISO_8859_1 ) : ''
+        raw_name ? raw_name.content.gsub(/[\s]+/, " ").gsub(/[^a-zA-Z0-9 :\-\&\.,]/, '') : ''
     end
     
     def game_price
@@ -60,4 +68,11 @@ end
 
 
 ss = SteamStrape.new
-ss.next_page
+
+while res = ss.next_page do
+    res.each do |row|
+        puts row
+    end
+    sleep( 5 )
+end
+
