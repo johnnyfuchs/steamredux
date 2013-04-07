@@ -56,7 +56,7 @@ class SteamStrape
     
     def game_name
         raw_name = @ele.css('.search_name h4').first
-        #raw_name ? raw_name.content.gsub(/[\s]+/, " ").encode( Encoding::ISO_8859_1 ) : ''
+        # Killing special characters, Encoding::ISO_8859_1 was a pain to convert to UTF-8 versions.
         raw_name ? raw_name.content.gsub(/[\s]+/, " ").gsub(/[^a-zA-Z0-9 :\-\&\.,]/, '') : ''
     end
     
@@ -67,6 +67,9 @@ class SteamStrape
 end
 
 
+#
+# Executing script
+#
 ss = SteamStrape.new
 
 while res = ss.next_page do
