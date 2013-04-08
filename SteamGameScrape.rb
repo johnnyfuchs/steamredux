@@ -12,9 +12,9 @@ class SteamGameStrape
         @ele
     end
 
-    # Incremnts the page count.
-    # Loads the network request results into a Nokogiri HTML document.
-    # Returns the array of formated and filtered results.
+    # Increment the requested page number.
+    # Save network result to a Nokigiri HTML document.
+    # Return formatted results (game id, name, type, etc)
     def next_page
         @page = @page.next
         doc_content = open("#{@url}?page=#{@page}", "User-Agent" => @user_agent)
@@ -24,8 +24,8 @@ class SteamGameStrape
     end
 
     # Finds all the blocks that match .search_result_row using a css selector.
-    # Sets the @ele reference to the next result.
-    # All parsing will be done on this object.
+    # Set a row and element reference to be used by parsing functions.
+    # Return array of parsed results.
     def parse_page
         rows = @doc.css('.search_result_row')
         results = []
@@ -40,13 +40,14 @@ class SteamGameStrape
         results
     end
 
-    # Just joins all the arguments with tabs.
-    # This is where some db updating could happen.
+    # Basically just joins arguments with tabs for later use.
     def format_next_row( id, price, name, type)
         "#{@row.to_s}\t#{id}\t#{type}\t#{price}\t#{name}"
     end
 
-    # Parse out the content type, ie: game, downloadable content, video preview, etc.
+    # The "game_type" is really "content_type" as search results also include guides, mods, etc.
+    # The only place that has this information is the icon for the game type,
+    # fortunately it's semantically named.
     def game_type
         img_ele = @ele.css('.search_type img')
         if img_ele && img_ele.length && img_ele.first.attribute('src')
@@ -57,14 +58,16 @@ class SteamGameStrape
         type
     end
 
-    # Parse out the Steam game reference id from the link to the detail page.
+    # The game id is Steam's external (maybe internally too?).
+    # This is pulled from the permalink to the game page.
     def game_id
         app = @ele.attribute('href').content.scan(/app\/[0-9]+/)
         id = app.first ? app.first.gsub(/app\//,'') : nil
         id
     end
     
-    # Get the game name.
+    # Game name is scrapped from the h4 tag.
+    # Steam's emplyees are totally using XP or something, cuz ISO characters are everywhere.
     def game_name
         raw_name = @ele.css('.search_name h4').first
         # Killing special characters, Encoding::ISO_8859_1 was a pain to convert to UTF-8 versions.
@@ -85,6 +88,7 @@ end
 ss = SteamGameStrape.new
 
 # As long as results come back, keep fetching new pages.
+# This needs _much_ more robust handling.
 while res = ss.next_page do
     res.each do |row|
         puts row
