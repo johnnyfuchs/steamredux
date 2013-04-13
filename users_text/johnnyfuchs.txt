@@ -1,0 +1,18 @@
+1	208480	480.5	Assassins Creed III
+2	72850	279.7	The Elder Scrolls V: Skyrim
+3	205100	273.1	Dishonored
+4	35140	208.2	Batman: Arkham Asylum GOTY Edition
+5	217790	71.5	Dogfight 1942
+6	8930	36.7	Sid Meiers Civilization V
+7	24780	36.6	SimCity 4 Deluxe
+8	620	17.2	Portal 2
+9	400	15.3	Portal
+10	41500	8.8	Torchlight
+11	208140	8.5	Endless Space
+12	48000	1.7	LIMBO
+13	220	1.6	Half-Life 2
+14	208600	1.4	Lunar Flight
+15	92800	0.5	SpaceChem
+16	105600	0.3	Terraria
+17	8500	0	Eve Online: Inferno
+18	340	0	Half-Life 2: Lost Coast
