@@ -12,21 +12,27 @@ require 'json'
 #
 class UserGameScrape
     def initialize
-        @baseurl = "http://steamcommunity.com/id/"
+        @baseurl = "http://steamcommunity.com/"
         @gamepath = "/games/?tab=all"
         @user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22"
         @gamer = false
     end
 
-    # games method accepts valid Steam user with public profile
-    # open fails if user is non-existent or invalid (yay no error checking!)
-    # returns a tab formatted list of results
+    # games method accepts valid Steam user name of profile id
     def games( gamer )
+        @path = gamer.match(/[0-9]{17}/) ? "profiles/" : "id/"
         @gamer = gamer
-        doc_content = open("#{@baseurl}#{@gamer}#{@gamepath}", "User-Agent" => @user_agent)
+        res = self.make_request
+        res
+    end
+
+    # request fails if user is non-existent or invalid (yay no error checking!)
+    # returns a tab formatted list of results
+    def make_request
+        doc_content = open("#{@baseurl}#{@path}#{@gamer}#{@gamepath}", "User-Agent" => @user_agent)
         @doc = Nokogiri::HTML( doc_content )
-        results = self.reformat_games( self.get_json )
-        results
+        res = self.reformat_games( self.get_json )
+        res
     end
 
     # get_json performs the heavy lifting of this class
