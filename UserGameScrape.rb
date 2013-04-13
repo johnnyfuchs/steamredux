@@ -3,6 +3,13 @@ require 'nokogiri'
 require 'cgi'
 require 'json'
 
+# UserGameScrape
+#
+# Usage:
+#  ugs = UserGameScrape.new
+#  games_tsv_string = ugs.games( steam_game_name )
+#  puts games_tsv_string
+#
 class UserGameScrape
     def initialize
         @baseurl = "http://steamcommunity.com/id/"
@@ -11,6 +18,9 @@ class UserGameScrape
         @gamer = false
     end
 
+    # games method accepts valid Steam user with public profile
+    # open fails if user is non-existent or invalid (yay no error checking!)
+    # returns a tab formatted list of results
     def games( gamer )
         @gamer = gamer
         doc_content = open("#{@baseurl}#{@gamer}#{@gamepath}", "User-Agent" => @user_agent)
@@ -19,6 +29,10 @@ class UserGameScrape
         results
     end
 
+    # get_json performs the heavy lifting of this class
+    # It searches the script tags for the javascript variable "rgGames",
+    # which contains a json object of all the users' games.
+    # This json string is parsed and reformatted for output to text file
     def get_json
         json = @doc.css('head script')
         json.each do |script|
@@ -32,6 +46,9 @@ class UserGameScrape
         end
     end
 
+
+    # reformat_games - loops through json array input and pulls out
+    # key data points for reformatted output
     def reformat_games( json )
         formatted = []
         @row = 0
@@ -53,6 +70,7 @@ end
 #
 # Executing script (main)
 #
-ss = UserGameScrape.new
+ugs = UserGameScrape.new
 
-puts ss.games( "johnnyfuchs" )
+# printing out games to be dumped to file
+puts ugs.games( "johnnyfuchs" )
