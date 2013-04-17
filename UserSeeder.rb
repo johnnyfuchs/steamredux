@@ -22,7 +22,7 @@ class UserSeeder
 
     def next_forum( attempts = 10 )
         @forum = @forum.next
-        puts "checking next forum number #{@forum} with #{attempts} attempts remaining...\n"
+        #puts "checking next forum number #{@forum} with #{attempts} attempts remaining...\n"
         unless attempts
             abort("cannot find a new forum")
         end
@@ -30,7 +30,7 @@ class UserSeeder
         sleep(2)
         @forum_contents = forum_content.read
         @forum_pages = self.get_forum_page_count
-        puts "pages in forum: #{@forum_pages}\n"
+        #puts "pages in forum: #{@forum_pages}\n"
         if @forum_pages > 0
             @forum_page = 0
         else
@@ -40,7 +40,7 @@ class UserSeeder
     end
 
     def next_forum_page
-        puts "on forum page #{@forum_page} of #{@forum_pages}\n"
+        #puts "on forum page #{@forum_page} of #{@forum_pages}\n"
         if @forum_page < @forum_pages
             start = @forum_page * @forum_page_size
             forum_content = open("#{@forum_url}/#{@forum}/?start=#{start}&count=#{@forum_page_size}", "User-Agent" => @user_agent)
@@ -53,7 +53,7 @@ class UserSeeder
     end
 
     def fill_topic_buffer
-        puts "filling topic buffer using page #{@forum_page} of #{@forum_pages}\n"
+        #puts "filling topic buffer using page #{@forum_page} of #{@forum_pages}\n"
         if @forum_page < @forum_pages
             start = @forum_page * @forum_page_size
             forum_content = open("#{@forum_url}/#{@forum}/?start=#{start}&count=#{@forum_page_size}", "User-Agent" => @user_agent)
@@ -73,7 +73,7 @@ class UserSeeder
     end
 
     def get_user
-        puts "getting user\n"
+        #puts "getting user\n"
         if @user_buffer.length > 0
             return @user_buffer.shift
         else
@@ -83,7 +83,7 @@ class UserSeeder
     end
 
     def fill_user_buffer
-        puts "filling user buffer\n"
+        #puts "filling user buffer\n"
         # check the discussion topic buffer
         if @topic_buffer.length > 0
             self.users_from_topic( @forum, @topic_buffer.shift )
@@ -94,7 +94,7 @@ class UserSeeder
     end
 
     def users_from_topic( forum, topic )
-        puts "getting users from forum #{forum} and topic #{topic}\n"
+        #puts "getting users from forum #{forum} and topic #{topic}\n"
         content = open("#{@discussion_url}/#{forum}/#{topic}/", "User-Agent" => @user_agent)
         sleep(2)
         doc = Nokogiri::HTML( content )
@@ -104,7 +104,7 @@ class UserSeeder
     end
 
     def get_forum_page_count
-        puts "getting page count\n"
+        #puts "getting page count\n"
         pages = 0
         if @forum_contents.length > 10
             if match = @forum_contents.match(/"total_count"\s?:\s?(null|[0-9]+)/i)
@@ -124,7 +124,6 @@ end
 di = UserSeeder.new
 
 while true
-    u = di.get_user
-    puts "********user: #{u}\n"
+    puts di.get_user
 end
 
