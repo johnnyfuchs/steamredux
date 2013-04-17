@@ -67,7 +67,7 @@ class UserSeeder
                 self.fill_topic_buffer
             end
         else
-            self.next_forum
+            self.next_forum_page
             self.fill_topic_buffer
         end
     end
@@ -124,8 +124,7 @@ end
 di = UserSeeder.new
 
 while true
-    di.next_forum_page
-    #u = di.get_user
-    #puts "********user: #{u}\n"
+    u = di.get_user
+    puts "********user: #{u}\n"
 end
 
