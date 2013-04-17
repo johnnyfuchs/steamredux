@@ -4,7 +4,7 @@ require 'cgi'
 
 class UserSeeder
     def initialize
-        @forum = 0
+        @forum = -1
 
         @user_buffer = []
         @topic_buffer = []
@@ -21,7 +21,8 @@ class UserSeeder
     end
 
     def next_forum( attempts = 10 )
-        puts "checking next forum number #{@forum} with #{attempts} remaining...\n"
+        @forum = @forum.next
+        puts "checking next forum number #{@forum} with #{attempts} attempts remaining...\n"
         unless attempts
             abort("cannot find a new forum")
         end
@@ -29,12 +30,25 @@ class UserSeeder
         sleep(2)
         @forum_contents = forum_content.read
         @forum_pages = self.get_forum_page_count
+        puts "pages in forum: #{@forum_pages}\n"
         if @forum_pages > 0
             @forum_page = 0
         else
-            @forum = @forum.next
             attempts -= 1
             self.next_forum( attempts )
+        end
+    end
+
+    def next_forum_page
+        puts "on forum page #{@forum_page} of #{@forum_pages}\n"
+        if @forum_page < @forum_pages
+            start = @forum_page * @forum_page_size
+            forum_content = open("#{@forum_url}/#{@forum}/?start=#{start}&count=#{@forum_page_size}", "User-Agent" => @user_agent)
+            sleep(2)
+            @forum_contents = forum_content.read
+            @forum_page = @forum_page.next
+        else
+            self.next_forum
         end
     end
 
@@ -110,7 +124,8 @@ end
 di = UserSeeder.new
 
 while true
-    u = di.get_user
-    puts "********user: #{u}\n"
+    di.next_forum_page
+    #u = di.get_user
+    #puts "********user: #{u}\n"
 end
 
