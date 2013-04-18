@@ -54,18 +54,9 @@ class UserSeeder
 
     def fill_topic_buffer
         #puts "filling topic buffer using page #{@forum_page} of #{@forum_pages}\n"
-        if @forum_page < @forum_pages
-            start = @forum_page * @forum_page_size
-            forum_content = open("#{@forum_url}/#{@forum}/?start=#{start}&count=#{@forum_page_size}", "User-Agent" => @user_agent)
-            sleep(2)
-            @forum_contents = forum_content.read
-            page_topics = @forum_contents.scan(/steamcommunity.com\\\/discussions\\\/forum\\\/[0-9]+\\\/([0-9]+)\\\//).flatten
-            if page_topics.length > 0
-                @topic_buffer.concat( page_topics )
-            else
-                @forum_page = @forum_page.next
-                self.fill_topic_buffer
-            end
+        page_topics = @forum_contents.scan(/steamcommunity.com\\\/discussions\\\/forum\\\/[0-9]+\\\/([0-9]+)\\\//).flatten
+        if page_topics.length > 0
+            @topic_buffer.concat( page_topics )
         else
             self.next_forum_page
             self.fill_topic_buffer
@@ -125,5 +116,6 @@ di = UserSeeder.new
 
 while true
     puts di.get_user
+    $stdout.flush
 end
 
