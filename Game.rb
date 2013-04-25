@@ -2,15 +2,15 @@ require 'neography'
 require 'net/http'
 require 'uri'
 require 'json'
+require_relative 'NeoNode'
 
 class Game
     attr_accessor :node_id, :game_id, :name, :price
-    def initialize( props )
-        puts "initializing"
+    def initialize( props = false )
         if !$neo
             $neo = Neography::Rest.new
             $neo.set_node_auto_index_status( true )
-            $neo.add_node_auto_index_property( 'game_id' )
+            $neo.add_node_auto_index_property( @type )
         end
         if props
             self.set_props( props )
@@ -19,89 +19,52 @@ class Game
 
     def set_props( props )
         puts "setting props"
-        self.game_id = props[:game_id] || self.game_id
-        self.node_id = props[:node_id] || self.node_id
-        self.name = props[:name] || self.name
-        self.price = props[:price] || self.price
+        @game_id = props[:game_id].to_i || @game_id
+        @node_id = props[:node_id].to_i || @node_id
+        @name    = props[:name]         || @name
+        @price   = props[:price]        || @price
     end
 
-    def reset
-        puts "reset game"
-        self.game_id = nil
-        self.node_id = nil
-        self.name = nil
-        self.price = nil
-        @node = nil
-    end
-
-    def game_id
-        @game_id.to_i
-    end
-
-    def node_id
-        @node_id.to_i
-    end
-
-
-    def price
-        @node_id || 0.0
+    def node_id=( value )
+        puts "setting node_id"
+        @node_id = value.to_i
     end
 
     def load
         puts "loading node from index"
-        res = $neo.get_node_auto_index( 'game_id', self.game_id )
-        @node  = res ? self.index_result2node( res.first ) : nil
+        res = $neo.get_node_auto_index( 'game_id', @game_id.to_i )
+        if res
+            @node_id = self.index_result2node( res.first )
+        end
     end
 
     def index_result2node( result )
+        #puts "looking for node_id in #{result.to_s}"
         node_ids = result.to_s.scan(/node\/([0-9]+)\/relat/).flatten
-        node_id = node_ids.length > 0 ? node_ids.first : nil
-        
-        puts "node id found: #{node_id.to_i}"
-
-        @node = $neo.get_node( node_id.to_i )
-
-        puts "get node's node"
-        p @node
-
-        @node
+        id = node_ids.length > 0 ? node_ids.first.to_i : nil
+        id
     end
 
     def inspect
-        puts "inspecting..."
-        puts "Game => {node_id: #{self.node_id}, game_id: #{self.game_id}, name: #{@name}, price: #{@price}}"
-    end
-
-    def node
-        puts "returning node"
-        @node
+        puts "Game => {node_id: #{@node_id}, game_id: #{@game_id}, name: #{@name}, price: #{@price}}"
     end
 
     def save
         puts "saving game"
         self.load
-        if !@node
-            @node = $neo.create_node( :game_id => self.game_id, :name => self.name, :price => self.price )
-            puts "Checking create return val"
-            p @node
+        if !@node_id || @node_id == 0
+            puts "creating node"
+            node = $neo.create_node( :game_id => @game_id.to_i, :name => @name, :price => @price )
+            @node_id = self.index_result2node( node )
         else
-            puts "Checking set_prop node val"
-            p @node
-            puts "Checking set_prop node val done"
-            
-            $neo.set_node_properties(@node, { :game_id => self.game_id, :name => self.name, :price => self.price })
+            puts "setting props"
+            $neo.set_node_properties(@node_id, { :game_id => @game_id, :name => @name, :price => @price })
         end
     end
 
-    def delete
-        puts "attempting to delete node"
-        if @node
-            $neo.delete_node( @node )
-        end
-    end
 end
 
-(1..10).each do |id|
-    game = Game.new( :game_id => id, :name => "Cool Game #{id}" )
+(1..4).each do |id|
+    game = Game.new( :game_id => id, :name => "Cool Game #{id}", :price => "just#{id}")
     game.save
 end
