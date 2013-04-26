@@ -9,14 +9,18 @@ class NeoNode
     
     # only really helpful thing is the "type" or index that the node
     # can be looked up by (game, player, etc)
-    def initialize( type )
-        @type = type || 'name'
+    def initialize
         @node_id = nil
         if !$neo
             $neo = Neography::Rest.new
-            $neo.set_node_auto_index_status( true )
-            $neo.add_node_auto_index_property( @type )
+            $neo_indexes = $neo.list_indexes
         end
+    end
+
+    def index( prop )
+        $neo.set_node_auto_index_status( false )
+        $neo.create_node_index( prop, 'fulltext', 'lucene' )
+        $neo_indexes = $neo.list_indexes
     end
 
     # loads a node based on the id
@@ -32,24 +36,35 @@ class NeoNode
     end
 
     # loads a node based on the index or type
-    def find( id )
+    def find( prop, id )
         begin
-            res = $neo.get_node_auto_index( @type, id )
+            res = $neo.find_node_index( prop, prop, id )
         rescue
             res = nil
         end
         if res
-            @node_id = self.id_from_result( res.first )
+            @node_id = id_from_result( res.first )
         end
+        @node_id
     end
 
     # creates or updates a node with the given map of properties
     def save( props )
+        indexed = props.keys & $neo_indexes.keys.map {|x| x.to_sym }
+        if indexed.length
+            find( indexed.first, props[indexed.first] )
+        end
         if !@node_id || @node_id == 0
             node = $neo.create_node( props )
-            @node_id = self.id_from_result( node )
+            @node_id = id_from_result( node )
         else
             $neo.set_node_properties(@node_id, props )
+        end
+
+        indexed.each do |key|
+            prop = props[key]
+            $neo.remove_node_from_index( key, key, @node_id )
+            $neo.add_node_to_index( key, key, prop, @node_id )
         end
     end
 
@@ -78,11 +93,3 @@ class NeoNode
         id
     end
 end
-
-#puts "test"
-#puts "Initializes:"
-n = NeoNode.new( 'game_id' )
-n.find( 2 )
-n.save( :game_id => 2, :name => "Cool Game 22", :price => "222222" )
-p n
-
