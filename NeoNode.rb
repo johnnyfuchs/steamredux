@@ -35,6 +35,10 @@ class NeoNode
         end
     end
 
+    def id
+        @node_id
+    end
+
     # loads a node based on the index or type
     def find( prop, id )
         begin
@@ -46,6 +50,14 @@ class NeoNode
             @node_id = id_from_result( res.first )
         end
         @node_id
+    end
+
+    def bind( type, to, props )
+        if to > 0 && type && @node_id
+            $neo.create_relationship( type, @node_id, to, props )
+            return true
+        end
+        return false
     end
 
     # creates or updates a node with the given map of properties

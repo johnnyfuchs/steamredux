@@ -6,7 +6,7 @@ require 'thread'
 require_relative 'NeoNode'
 
 n = NeoNode.new
-n.index( :game )
+n.index( :user )
 
 queue = [] 
 threads = []

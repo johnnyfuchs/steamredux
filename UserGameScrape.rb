@@ -40,22 +40,29 @@ class UserGameScrape
     # which contains a json object of all the users' games.
     # This json string is parsed and reformatted for output to text file
     def get_json
-        json = @doc.css('head script')
+        json = @doc.css('script')
         json.each do |script|
             body = script.content
             pos = body.index('var rgGames = ')
             if pos
                 pos += 'var rgGames = '.length
                 game_json, *others = body[pos, body.length].split(/;/)
-                return JSON.parse(game_json.strip).each
+                res = JSON.parse(game_json.strip)
+                if res.kind_of?(Array) && res.first && res.first['appid'].to_i > 1
+                    return res
+                end
             end
         end
+        return nil
     end
 
 
     # reformat_games - loops through json array input and pulls out
     # key data points for reformatted output
     def reformat_games( json )
+        if !json
+            return nil
+        end
         formatted = []
         @row = 0
         json.each do |game|
@@ -71,12 +78,3 @@ class UserGameScrape
         "#{@row.to_s}\t#{id}\t#{hours}\t#{name}\n"
     end
 end
-
-
-#
-# Executing script (main)
-#
-ugs = UserGameScrape.new
-
-# printing out games to be dumped to file
-puts ugs.games( "johnnyfuchs" )
