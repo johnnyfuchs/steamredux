@@ -39,6 +39,34 @@ class NeoNode
         @node_id
     end
 
+    def relationships
+        rels = []
+        if @node_id && @node_id > 0
+            begin
+                result = $neo.get_node_relationships( @node_id )
+                if result
+                    result.each {|res| rels << ship_id_from_result( res )}
+                end
+            rescue
+                puts "no relationships for #{@node_id}"
+            end
+        end
+        rels
+    end
+
+    def unbind( other_node )
+        all = relationships
+        all.each do |other|
+            if other[:node].to_i == other_node.to_i
+                begin
+                    res = $neo.delete_relationship( other[:rel] )
+                rescue
+                    puts "failed to unbind #{@node_id} #{other_node}"
+                end
+            end
+        end
+    end
+
     # loads a node based on the index or type
     def find( prop, id )
         begin
@@ -53,9 +81,13 @@ class NeoNode
     end
 
     def bind( type, to, props )
-        if to > 0 && type && @node_id
-            $neo.create_relationship( type, @node_id, to, props )
-            return true
+        if to > 0 && type && @node_id && @node_id > 0
+            begin
+                $neo.create_relationship( type, @node_id, to, props )
+                return true
+            rescue
+                puts "failed to bind #{@node_id} to #{to} with #{props}"
+            end
         end
         return false
     end
@@ -103,5 +135,11 @@ class NeoNode
         node_ids = result.to_s.scan(/node\/([0-9]+)\/relat/).flatten
         id = node_ids.length > 0 ? node_ids.first.to_i : nil
         id
+    end
+
+    def ship_id_from_result( result )
+        ship = result['self'].scan(/lationship\/([0-9]+)/).flatten.first.to_i
+        last = result['end'].scan(/node\/([0-9]+)/).flatten.first.to_i
+        {:rel => ship, :node => last}
     end
 end
